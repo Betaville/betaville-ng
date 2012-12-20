@@ -7,16 +7,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
-
 /**
  * @author Joschka Zimdars
  *
  */
 
 public class LoginManager {
-	@SuppressWarnings("unused")
-	private static Logger logger = Logger.getLogger(LoginManager.class);
 	
 	private BufferedWriter out;
 	private BufferedReader in;

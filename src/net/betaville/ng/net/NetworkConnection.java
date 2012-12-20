@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import net.betaville.ng.net.codes.ConnectionCodes;
 
 import org.apache.log4j.Logger;
 
@@ -64,10 +63,10 @@ public class NetworkConnection {
 	public void close() {
 		try {
 			output.writeObject(ConnectionCodes.CLOSE);
-			clientSocket.close();
 			//output.close();
-			//clientSocket.close();
+			clientSocket.close();
 		} catch (IOException e) {
+			logger.warn(e);
 		}
 	}
 

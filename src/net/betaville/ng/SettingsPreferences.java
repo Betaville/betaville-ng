@@ -22,7 +22,8 @@ import edu.poly.bxmc.betaville.model.IUser.UserType;
 /**
  * Singleton class for keeping track of user preferences as well as
  * for interfacing with the stored file: <i>home</i>/.betaville/preferences.xml
- * @author Skye Book
+ * 
+ * @author Skye Book, modified by Jannes Meyer
  *
  */
 public class SettingsPreferences {
@@ -127,24 +128,44 @@ public class SettingsPreferences {
 	private static boolean authenticated = false;
 
 	private static URL DATA_FOLDER = null;
+	private static URL DATA_FOLDER3 = null;
 
-	public synchronized static URL getDataFolder(){
-		if(DATA_FOLDER==null){
+	public synchronized static URL getDataFolder() {
+		if(DATA_FOLDER == null){
 			try {
-				DATA_FOLDER = new URL(System.getProperty("betaville.cache.location")+"/");
+				DATA_FOLDER = new URL(System.getProperty("betaville.cache.location") + "/");
 				File cacheFile = new File(DATA_FOLDER.toURI());
 				if(!cacheFile.exists()){
 					cacheFile.mkdirs();
 				}
 			} catch (MalformedURLException e) {
-				e.printStackTrace();
+				logger.fatal(e);
 			} catch (URISyntaxException e) {
-				e.printStackTrace();
+				logger.fatal(e);
 			}
 		}
+		
 		return DATA_FOLDER;
 	}
 
+	public synchronized static URL getDataFolder3() {
+		if(DATA_FOLDER3 == null){
+			try {
+				DATA_FOLDER3 = new URL(System.getProperty("betaville.cache3.location") + "/");
+				File cacheFile = new File(DATA_FOLDER3.toURI());
+				if(!cacheFile.exists()){
+					cacheFile.mkdirs();
+				}
+			} catch (MalformedURLException e) {
+				logger.fatal(e);
+			} catch (URISyntaxException e) {
+				logger.fatal(e);
+			}
+		}
+		
+		return DATA_FOLDER3;
+	}
+	
 	/**
 	 * The last accessed location when using a file browser within
 	 * the application.  Initialized to the user's home folder on

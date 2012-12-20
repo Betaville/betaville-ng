@@ -7,7 +7,7 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.betaville.ng.SettingsPreferences;
-import net.betaville.ng.taskqueue.AbstractUpdater;
+import net.betaville.ng.periodicupdater.AbstractUpdater;
 
 import org.apache.log4j.Logger;
 
@@ -42,7 +42,7 @@ public class NetPool extends AbstractUpdater {
 
 		// If there are no managers, create one and return it
 		if(managers.isEmpty()){
-			logger.debug("No client found. Creating " + InsecureClientManager.class.getName());
+			logger.info("No client found. Creating " + InsecureClientManager.class.getName());
 			InsecureClientManager icm = new InsecureClientManager();
 			managers.add(icm);
 			icm.busy.set(true);
@@ -58,7 +58,7 @@ public class NetPool extends AbstractUpdater {
 		}
 
 		// If no idle managers were found, then we add a new manager to the pool and return that
-		logger.debug("No idle client found. Creating " + InsecureClientManager.class.getName());
+		logger.info("No idle client found. Creating " + InsecureClientManager.class.getName());
 		InsecureClientManager icm = new InsecureClientManager();
 		managers.add(icm);
 		icm.busy.set(true);
@@ -71,7 +71,7 @@ public class NetPool extends AbstractUpdater {
 
 		// If there are no managers, create one and return it
 		if(managers.isEmpty()){
-			logger.debug("No client found. Creating " + SecureClientManager.class.getName());
+			logger.info("No client found. Creating " + SecureClientManager.class.getName());
 			SecureClientManager scm;
 			if(SettingsPreferences.useSSL()) scm = new SSLClientManager();
 			else scm = new SecureClientManager(true);
@@ -89,7 +89,7 @@ public class NetPool extends AbstractUpdater {
 		}
 
 		// If no idle managers were found, then we add a new manager to the pool and return that
-		logger.debug("No idle client found. Creating " + SecureClientManager.class.getName());
+		logger.info("No idle client found. Creating " + SecureClientManager.class.getName());
 		SecureClientManager scm;
 		if(SettingsPreferences.useSSL()) scm = new SSLClientManager();
 		else scm = new SecureClientManager(true);
@@ -123,7 +123,7 @@ public class NetPool extends AbstractUpdater {
 
 	public void doUpdate(){
 		isInUpdate=true;
-		logger.debug("Performing network connection cleanup ("+managers.size()+" currently)");
+		logger.info("Performing network connection cleanup ("+managers.size()+" currently)");
 		int startingTotal = managers.size();
 		// This is reserved for the first idle connection we come across, it will be saved
 		int firstIdle=-1;
@@ -136,7 +136,7 @@ public class NetPool extends AbstractUpdater {
 				}
 				else{
 					// Remove extra idle managers
-					logger.debug("Closing " + managers.get(i).getClass().getName());
+					logger.info("Closing " + managers.get(i).getClass().getName());
 					managers.get(i).close();
 					managers.remove(i);
 					if(i==managers.size()-1){

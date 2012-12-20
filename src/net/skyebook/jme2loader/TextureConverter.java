@@ -2,7 +2,8 @@ package net.skyebook.jme2loader;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.asset.plugins.ClasspathLocator;
@@ -16,7 +17,7 @@ import com.jme3.texture.Texture2D;
  */
 public class TextureConverter {
 
-	private static final Logger logger = Logger.getLogger(TextureConverter.class.getName());
+	private static final Logger logger = Logger.getLogger(TextureConverter.class);
 
 	private static ArrayList<com.jme.image.Image.Format> unsupportedImageFormat;
 
@@ -45,11 +46,11 @@ public class TextureConverter {
 		if(jme2Texture.isStoreTexture()){
 			try{
 				if(jme2Texture.getImage()==null){
-					logger.warning("WTF, null texture coming from jME2?");
+					logger.warn("WTF, null texture coming from jME2?");
 					return null;
 				}
 			}catch(NullPointerException e){
-				logger.warning("WTF, null texture coming from jME2?");
+				logger.warn("WTF, null texture coming from jME2?");
 				return null;
 			}
 			Image jme3Image = twoToThree(jme2Texture.getImage());
@@ -98,7 +99,7 @@ public class TextureConverter {
 			return new Image(Image.Format.valueOf(image.getFormat().name()), image.getWidth(), image.getHeight(), image.getDepth(), image.getData());
 		}
 		else{
-			logger.warning(image.getFormat().name() + " is not supported in jME3!");
+			logger.warn(image.getFormat().name() + " is not supported in jME3!");
 			return null;
 		}
 	}

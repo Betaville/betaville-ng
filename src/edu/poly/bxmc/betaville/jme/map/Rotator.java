@@ -39,7 +39,7 @@ public class Rotator {
 	 * @return Quaternion calculation of the requested angle.
 	 */
 	public static Quaternion angleX(float degrees){
-		return new Quaternion().fromAngleAxis(FastMath.DEG_TO_RAD*degrees,  Vector3f.UNIT_X);
+		return new Quaternion().fromAngleAxis(FastMath.DEG_TO_RAD * degrees,  Vector3f.UNIT_X);
 	}
 	
 	/**
@@ -49,7 +49,7 @@ public class Rotator {
 	 * @return Quaternion calculation of the requested angle.
 	 */
 	public static Quaternion angleY(float degrees){
-		return new Quaternion().fromAngleAxis(FastMath.DEG_TO_RAD*degrees,  Vector3f.UNIT_Y);
+		return new Quaternion().fromAngleAxis(FastMath.DEG_TO_RAD * degrees,  Vector3f.UNIT_Y);
 	}
 	
 	/**
@@ -59,10 +59,10 @@ public class Rotator {
 	 * @return Quaternion calculation of the requested angle.
 	 */
 	public static Quaternion angleZ(float degrees){
-		return new Quaternion().fromAngleAxis(FastMath.DEG_TO_RAD*degrees,  Vector3f.UNIT_Z);
+		return new Quaternion().fromAngleAxis(FastMath.DEG_TO_RAD * degrees,  Vector3f.UNIT_Z);
 	}
 	
 	public static Quaternion fromThreeAngles(float x, float y, float z){
-		return new Quaternion().fromAngles(FastMath.DEG_TO_RAD*x, FastMath.DEG_TO_RAD*y, FastMath.DEG_TO_RAD*z);
+		return new Quaternion().fromAngles(FastMath.DEG_TO_RAD * x, FastMath.DEG_TO_RAD * y, FastMath.DEG_TO_RAD * z);
 	}
 }

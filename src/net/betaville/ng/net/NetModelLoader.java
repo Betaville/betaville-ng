@@ -19,7 +19,7 @@ import edu.poly.bxmc.betaville.model.ModeledDesign;
 /**
  * Loads models from the network.  Different options for what is loaded
  * can be configured by using the constructor's {@link LookupRoutine} parameter.
- * @author Skye Book
+ * @author Skye Book, modified by Jannes Meyer
  * @see LookupRoutine
  */
 public class NetModelLoader{
@@ -99,7 +99,8 @@ public class NetModelLoader{
 		}
 
 		if (designs == null) {
-			throw new RuntimeException("designs not received!");
+			logger.error("No base models received!");
+			designs = new ArrayList<Design>();
 		}
 		
 		List<Design> base = new ArrayList<Design>();
@@ -112,19 +113,17 @@ public class NetModelLoader{
 			
 			if(design instanceof ModeledDesign){
 				boolean fileResponse = false;
-				fileResponse = CacheManager.getCacheManager().requestFile(design.getID(), design.getFilepath());
+				fileResponse = CacheManager.getCacheManager2().requestFile(design.getID(), design.getFilepath());
 				
 				if (fileResponse) {
-//					ModeledDesign modeledDesign = (ModeledDesign) design;
-		
 					if (design.getClassification().equals(Classification.BASE) && !design.isProposal() && design.isPublic()) {
 						logger.info("(Base) Adding: " + design.getName() + " | ID: " + design.getID());
 						base.add(design);
 						SettingsPreferences.getCity(cityID).addDesign(design);
 					}
 				}
-			} else if(design instanceof EmptyDesign){
-//				logger.info("Got an empty design");
+			} else if(design instanceof EmptyDesign) {
+				// What the heck might these things be good for?
 			}
 		}
 		allDesignsProcessed.set(true);
@@ -150,7 +149,8 @@ public class NetModelLoader{
 		List<Design> designs = NetPool.getPool().getConnection().findTerrainByCity(cityID);
 		
 		if(designs == null){
-			throw new RuntimeException("designs not received!");
+			logger.error("No terrain received!");
+			designs = new ArrayList<Design>();
 		}
 
 		List<Design> terrain = new ArrayList<Design>();
@@ -159,11 +159,9 @@ public class NetModelLoader{
 			
 			if(design instanceof ModeledDesign){
 				boolean fileResponse = false;
-				fileResponse = CacheManager.getCacheManager().requestFile(design.getID(), design.getFilepath());
+				fileResponse = CacheManager.getCacheManager2().requestFile(design.getID(), design.getFilepath());
 				
 				if (fileResponse) {
-//					ModeledDesign modeledDesign = (ModeledDesign) design;
-					
 					if(design.getName().contains("$TERRAIN")) {
 						// Terrain
 						logger.info("(Terrain) Adding: " + design.getName() + " | ID: " + design.getID());
@@ -173,7 +171,7 @@ public class NetModelLoader{
 					}	
 				}
 			} else if(design instanceof EmptyDesign){
-//				logger.info("Got an empty design");
+				// What the heck might these things be good for?
 			}
 		}
 		return terrain;

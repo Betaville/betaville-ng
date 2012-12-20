@@ -98,12 +98,12 @@ public abstract class ClientManager extends NetworkConnection implements Unprote
 	public Design findDesignByID(int designID){
 		busy.getAndSet(true);
 		try {
-			logger.debug("Finding design " + designID);
+			logger.info("Finding design " + designID);
 			writeToStream(new Object[]{"design", "findbyid", designID});
 			Object response = readResponse();
 			if(response instanceof Design){
-				CacheManager.getCacheManager().requestFile(((Design)response).getID(), ((Design)response).getFilepath());
-				CacheManager.getCacheManager().requestThumbnail(designID);
+				CacheManager.getCacheManager2().requestFile(((Design)response).getID(), ((Design)response).getFilepath());
+				CacheManager.getCacheManager2().requestThumbnail(designID);
 				
 				busy.getAndSet(false);
 				touchLastUsed();
@@ -568,7 +568,7 @@ public abstract class ClientManager extends NetworkConnection implements Unprote
 	public PhysicalFileTransporter requestThumbnail(int designID){
 		busy.getAndSet(true);
 		try{
-			logger.debug("Requesting thumbnail for design " + designID);
+			logger.info("Requesting thumbnail for design " + designID);
 			writeToStream(new Object[]{"design", "requestthumb", designID});
 			PhysicalFileTransporter response = (PhysicalFileTransporter)readResponse();
 			busy.getAndSet(false);
@@ -599,7 +599,7 @@ public abstract class ClientManager extends NetworkConnection implements Unprote
 	public PhysicalFileTransporter requestFile(int designID){
 		busy.getAndSet(true);
 		try {
-			logger.debug("Requesting file for design " + designID);
+			logger.info("Requesting file for design " + designID);
 			writeToStream(new Object[]{"design", "requestfile", designID});
 			Object object = readResponse();
 			PhysicalFileTransporter response = null;

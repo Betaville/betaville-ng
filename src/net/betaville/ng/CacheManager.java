@@ -9,6 +9,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import net.betaville.ng.net.NetPool;
@@ -21,76 +22,95 @@ import edu.poly.bxmc.betaville.jme.map.UTMCoordinate;
 import edu.poly.bxmc.betaville.model.Design;
 import edu.poly.bxmc.betaville.net.PhysicalFileTransporter;
 
-
 /**
  * Manages Betaville's cache directory.
- * @author Skye Book
- *
+ * 
+ * @author Skye Book, modified by Jannes Meyer
  */
 public class CacheManager {
 	private static final Logger logger = Logger.getLogger(CacheManager.class);
 
 	private static CacheManager cm = null;
 
-	// Holds the maximum size of the cache in MB
-	private int maxSize;
-
 	// Stores the current size of the cache in bytes
 	private long currentSize;
 
-	private HashMap<String,Long> files;
-
-	private ArrayList<ICacheModifiedListener> cacheModifiedListeners;
+	private URL cacheDir;
+	private HashMap<String, Long> files = new HashMap<String, Long>();
+	private List<ICacheModifiedListener> cacheModifiedListeners = new ArrayList<ICacheModifiedListener>();
 
 	/**
 	 * Private constructor to enforce singleton class.
 	 */
-	private CacheManager() {
-		files = new HashMap<String,Long>();
-		cacheModifiedListeners = new ArrayList<ICacheModifiedListener>();
+	private CacheManager(URL cacheDir) {
+		this.cacheDir = cacheDir;
 		countFiles();
 	}
 
+	/**
+	 * @return The static instance of the {@link CacheManager} for jME2 models
+	 */
+	public synchronized static CacheManager getCacheManager2() {
+		if (cm == null) {
+			URL cacheDir = SettingsPreferences.getDataFolder();
+			cm = new CacheManager(cacheDir);
+		}
+		return cm;
+	}
+
+	/**
+	 * Adds a modification listener to this cache
+	 * @param listener The {@link ICacheModifiedListener} to add
+	 */
+	public void addCacheModifiedListener(ICacheModifiedListener listener){
+		cacheModifiedListeners.add(listener);
+	}
+
+	/**
+	 * Removes a modification listener from this cache
+	 * @param listener The {@link ICacheModifiedListener} to remove
+	 */
+	public void removeCacheModifiedListener(ICacheModifiedListener listener){
+		cacheModifiedListeners.remove(listener);
+	}
+	
 	private void countFiles(){
 		try {
-			File cacheDir = new File(SettingsPreferences.getDataFolder().toURI());
-			if(cacheDir.isDirectory()){
-				File[] dirFiles = cacheDir.listFiles();
-				for(int i=0; i<dirFiles.length; i++){
-					doFileRegistration(dirFiles[i]);
+			File path = new File(cacheDir.toURI());
+			if(path.isDirectory()){
+				File[] dirFiles = path.listFiles();
+				for (File f : dirFiles) {
+					doFileRegistration(f);
 				}
 				logger.info("Cache has " + dirFiles.length + " files at a size of " + (currentSize/1000 )+ "MB");
 			}
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			logger.error(e);
 		}
 	}
 
-	private boolean findFile(String file){
+	private boolean findFile(String file) {
 		File target;
 		try {
-			target = new File(new URL(SettingsPreferences.getDataFolder()+file).toURI());
+			target = new File(new URL(cacheDir + file).toURI());
 			return target.exists();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error(e);
+			return false;
 		}
-		return false;
 	}
 
 	private boolean findThumb(int designID){
 		File target;
 		try {
-			target = new File(new URL(SettingsPreferences.getDataFolder()+"thumbnail/"+designID+".png").toURI());
-			logger.debug("Looking for thumbnail in " + target.toString());
+			target = new File(new URL(cacheDir + "thumbnail/" + designID + ".png").toURI());
+			logger.info("Looking for thumbnail in " + target.toString());
 			return target.exists();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error(e);
+			return false;
 		}
-		return false;
+
 	}
 
 	public int getSizeOfFile(String fileName){
@@ -122,13 +142,11 @@ public class CacheManager {
 	 * Adds a file to those currently tracked by the cache
 	 * @param fileName
 	 */
-	private void registerFileInCache(String fileName){
-		File file = new File(SettingsPreferences.getDataFolder()+fileName);
-		if(file.exists()){
+	public void registerFileInCache(File file){
+		if (file.exists()){
 			doFileRegistration(file);
-			if(maxSize<currentSize){
-				// Do something drastic
-			}
+		} else {
+			logger.error("File does not seem to exist: " + file);
 		}
 	}
 
@@ -141,15 +159,23 @@ public class CacheManager {
 			for(ICacheModifiedListener listener : cacheModifiedListeners){
 				listener.fileAdded(file, currentSize);
 			}
+		} else {
+			logger.error("File does not seem to a file: " + file.getAbsolutePath());
 		}
 	}
 
-	public void deleteFile(String fileName){
-		File file = new File(SettingsPreferences.getDataFolder()+fileName);
-		if(file.exists()){
+	public void deleteFile(String filename){
+		File file;
+		try {
+			file = new File(new URL(cacheDir + filename).toURI());
+		} catch (Exception e) {
+			logger.error(e);
+			return;
+		}
+		if(file.exists()) {
 			long length = file.length();
 			if(file.delete()){
-				files.remove(removeExtension(fileName));
+				files.remove(removeExtension(filename));
 				currentSize-=length;
 				
 				// notify the listeners
@@ -157,8 +183,7 @@ public class CacheManager {
 					listener.fileRemoved(file, currentSize);
 				}
 			}
-		}
-		else{
+		} else {
 			logger.warn("No File to delete");
 		}
 	}
@@ -185,7 +210,7 @@ public class CacheManager {
 	 * @param name The filename from which to remove the extension
 	 * @return The shortened filename
 	 */
-	private String removeExtension(String name){
+	public static String removeExtension(String name){
 		return name.substring(0, name.lastIndexOf("."));
 	}
 
@@ -195,20 +220,23 @@ public class CacheManager {
 			if(!keepAlive){
 				manager.close();
 			}
-			if(pft!=null){
+			if(pft != null){
+				
+				File file = null;
 				try {
-					pft.writeToFileSystem(new File(new URL(SettingsPreferences.getDataFolder()+filename).toURI()));
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-				} catch (URISyntaxException e) {
-					e.printStackTrace();
+					file = new File(new URL(cacheDir + filename).toURI());
+				} catch (Exception e) {
+					logger.error(e);
+					return false;
 				}
-				registerFileInCache(filename);
+				
+				pft.writeToFileSystem(file);
+				registerFileInCache(file);
 				return true;
+			} else {
+				return false;
 			}
-			else return false;
-		}
-		else{
+		} else {
 			return true;
 		}
 	}
@@ -248,59 +276,47 @@ public class CacheManager {
 	 */
 	public boolean requestThumbnail(int designID) throws UnknownHostException, IOException{
 		if(!findThumb(designID)){
-			logger.debug("Requesting a thumbnail for design "+designID);
+			logger.info("Requesting a thumbnail for design " + designID);
 			PhysicalFileTransporter pft = NetPool.getPool().getConnection().requestThumbnail(designID);
-			if(pft!=null){
+			
+			if(pft != null){
+				File thumbFolder = null;
+				File thumbFile = null;
 				try {
-					File thumbFolder = new File(new URL(SettingsPreferences.getDataFolder()+"thumbnail/").toURI());
-					File thumbFile = new File(new URL(SettingsPreferences.getDataFolder()+"thumbnail/"+designID+".png").toURI());
-					if(thumbFolder.mkdirs()) logger.info("Thumbnail folder created");
-					pft.writeToFileSystem(thumbFile);
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-				} catch (URISyntaxException e) {
-					e.printStackTrace();
+					thumbFolder = new File(new URL(cacheDir + "thumbnail/").toURI());
+					thumbFile = new File(new URL(cacheDir + "thumbnail/" + designID + ".png").toURI());
+				} catch (Exception e) {
+					logger.error(e);
+					return false;
 				}
+				
+				if(thumbFolder.mkdirs()) {
+					logger.info("Thumbnail folder created");
+				}
+				
+				pft.writeToFileSystem(thumbFile);
 				return true;
-			}
-			else{
-				logger.debug("thumbnail PFT is null");
+			} else {
+				logger.warn("thumbnail PFT is null");
 				return false;
 			}
-		}
-		else{
+		} else {
 			return true;
 		}
 	}
 
-	public static URL getCachedThumbnailURL(int designID){
+	public URL getCachedThumbnailURL(int designID){
 		try {
-			URL url = new URL(SettingsPreferences.getDataFolder().toString().substring(0, SettingsPreferences.getDataFolder().toString().length()-1)+"thumbnail/"+designID+".png");
+			String cacheDirString = cacheDir.toString();
+			URL url = new URL(cacheDirString.substring(0, cacheDirString.length() - 1) + "thumbnail/" + designID + ".png");
 			if(OS.isWindows()){
-				url = new URL(SettingsPreferences.getDataFolder()+"thumbnail/"+designID+".png");
+				url = new URL(cacheDir + "thumbnail/" + designID + ".png");
 			}
-			logger.info("Thumbnail URL: " + url.toString());
 			return url;
 		} catch (MalformedURLException e) {
 			logger.error("A bad URL was created when generating the cached thumbnail URL", e);
 			return null;
 		}
-	}
-
-	/**
-	 * Adds a modification listener to this cache
-	 * @param listener The {@link ICacheModifiedListener} to add
-	 */
-	public void addCacheModifiedListener(ICacheModifiedListener listener){
-		cacheModifiedListeners.add(listener);
-	}
-
-	/**
-	 * Removes a modification listener from this cache
-	 * @param listener The {@link ICacheModifiedListener} to remove
-	 */
-	public void removeCacheModifiedListener(ICacheModifiedListener listener){
-		cacheModifiedListeners.remove(listener);
 	}
 	
 	/**
@@ -319,16 +335,4 @@ public class CacheManager {
 		return currentSize;
 	}
 
-	/**
-	 * @return The static instance of the {@link CacheManager}
-	 */
-	public synchronized static CacheManager getCacheManager(){
-		if(cm!=null){
-			return cm;
-		}
-		else{
-			cm = new CacheManager();
-			return cm;
-		}
-	}
 }

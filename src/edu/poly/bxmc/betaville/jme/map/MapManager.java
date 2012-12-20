@@ -99,7 +99,7 @@ public class MapManager<T>{
 		if(location.z<0) xOffset = location.z*-1;
 		else zOffset = location.z;
 		
-		logger.info("New MapManager offset set to ("+xOffset+","+zOffset+")");
+		logger.info("MapManager offset to (" + xOffset + "," + zOffset + ")");
 	}
 	
 	public static void setUTMZone(int newLonZone, char newLatZone){

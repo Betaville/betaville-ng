@@ -3,8 +3,8 @@ import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Logger;
 
 import com.jme.light.DirectionalLight;
 import com.jme.light.Light;
@@ -43,9 +43,8 @@ import com.jme3.scene.VertexBuffer.Type;
  *
  */
 public class JME2Loader implements AssetLoader{
-
-	private static final Logger logger = Logger.getLogger(JME2Loader.class.getName());
-	//logger.log(Level.WARNING, "why is {0} set to {1} again?!", new Object[]{a , b});
+	
+	private static final Logger logger = Logger.getLogger(JME2Loader.class);
 
 	public static com.jme3.scene.Spatial twoToThree(Spatial spatial, AssetManager assetManager){
 		
@@ -58,22 +57,22 @@ public class JME2Loader implements AssetLoader{
 			for(Light light : lightState.getLightList()){
 				if(light instanceof DirectionalLight){
 					newLights.add(twoToThree((DirectionalLight)light));
-					logger.warning("Creating a DirectionalLight");
+					logger.warn("Creating a DirectionalLight");
 				}
 				else if(light instanceof PointLight){
 					newLights.add(twoToThree((PointLight)light));
-					logger.warning("Creating a PointLight");
+					logger.warn("Creating a PointLight");
 				}
 				else if(light instanceof SpotLight){
 					newLights.add(twoToThree((SpotLight)light));
-					logger.warning("Creating a SpotLight");
+					logger.warn("Creating a SpotLight");
 				}
 			}
 		}
 		
 		if(spatial instanceof Node){
 			com.jme3.scene.Node node = new com.jme3.scene.Node(spatial.getName());
-			logger.log(Level.INFO, "Node name: {0}, children: {1}", new Object[]{ spatial.getName(), ((Node)spatial).getQuantity() });
+			logger.info("Node name: " + spatial.getName() + ", children: " + ((Node)spatial).getQuantity());
 			if(((Node)spatial).getQuantity()>0){
 				for(Spatial child : ((Node)spatial).getChildren()){
 					node.attachChild(twoToThree(child, assetManager));
@@ -85,21 +84,19 @@ public class JME2Loader implements AssetLoader{
 		}
 		else if(spatial instanceof Geometry){
 			Mesh mesh = new Mesh();
-			logger.log(Level.INFO, "Geometry name: {0}", new Object[]{ spatial.getName() });
+			logger.info("Geometry name: " + spatial.getName());
 			
 			
 			// Handle Geometry
 
 			// transfer vertex buffer
-			logger.info("Transfering VERTEX buffer");
 			FloatBuffer vertexBuffer = ((Geometry)spatial).getVertexBuffer().duplicate();
 			vertexBuffer.rewind();
 			mesh.setBuffer(Type.Position, 3, vertexBuffer);
 
 			// transfer normal buffer if it exists
 			FloatBuffer normalBuffer = ((Geometry)spatial).getNormalBuffer();
-			if(normalBuffer!=null){
-				logger.info("Transfering NORMAL buffer");
+			if(normalBuffer != null){
 				normalBuffer = normalBuffer.duplicate();
 				normalBuffer.rewind();
 				mesh.setBuffer(Type.Normal, 3, normalBuffer);
@@ -107,8 +104,7 @@ public class JME2Loader implements AssetLoader{
 
 			// transfer color buffer if it exists
 			FloatBuffer colorBuffer = ((Geometry)spatial).getColorBuffer();
-			if(colorBuffer!=null){
-				logger.info("Transfering COLOR buffer");
+			if(colorBuffer != null){
 				colorBuffer = colorBuffer.duplicate();
 				colorBuffer.rewind();
 				mesh.setBuffer(Type.Color, 4, colorBuffer);
@@ -116,7 +112,6 @@ public class JME2Loader implements AssetLoader{
 
 			// transfer index buffer
 			if(spatial instanceof TriMesh){
-				logger.info("Transfering TRIANGLE MESH");
 				IntBuffer indexBuffer = ((TriMesh)spatial).getIndexBuffer().duplicate();
 				indexBuffer.rewind();
 				mesh.setBuffer(Type.Index, 3, indexBuffer);
@@ -185,7 +180,7 @@ public class JME2Loader implements AssetLoader{
 			else{
 				mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
 				mat.setColor("Color", ColorRGBA.Blue);
-				logger.warning("Unshaded material");
+				logger.warn("Unshaded material");
 			}
 
 			// Blend modes
@@ -206,7 +201,7 @@ public class JME2Loader implements AssetLoader{
 			returnable = geometry;
 		}
 		else{
-			logger.warning("Unrecognized type");
+			logger.warn("Unrecognized type");
 			return null;
 		}
 		
@@ -269,7 +264,7 @@ public class JME2Loader implements AssetLoader{
 			DummySystemProvider dsp = new DummySystemProvider();
 			com.jme.system.DisplaySystem.setSystemProvider(dsp);
 			if(com.jme.system.DisplaySystem.getDisplaySystem().getRenderer()==null){
-				logger.warning("There should be a Renderer");
+				logger.warn("There should be a Renderer");
 			}
 		} catch (IllegalStateException e){
 			logger.info("System provider already set");
@@ -289,7 +284,7 @@ public class JME2Loader implements AssetLoader{
 			// run the converter
 			long start = System.currentTimeMillis();
 			com.jme3.scene.Spatial spatial = twoToThree(((com.jme.scene.Spatial)loadedObject), assetInfo.getManager());
-			logger.log(Level.INFO, "Conversion took {0}ms", System.currentTimeMillis() - start);
+			logger.info("Conversion took " + (System.currentTimeMillis() - start) + "ms");
 			return spatial;
 		}
 		else {
